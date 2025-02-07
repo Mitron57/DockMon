@@ -12,6 +12,7 @@ import (
     "fmt"
     "github.com/go-chi/chi/v5"
     "github.com/go-chi/chi/v5/middleware"
+    "github.com/go-chi/cors"
     _ "github.com/lib/pq"
     "go.uber.org/zap"
     "log"
@@ -81,6 +82,11 @@ func (s *Server) initRouter() {
     router.Use(middleware.RequestID)
     router.Use(middleware.Logger)
     router.Use(middleware.Recoverer)
+    router.Use(cors.Handler(cors.Options{
+        AllowedOrigins: []string{"http://*", "https://*"},
+        AllowedMethods: []string{"GET", "PUT", "OPTIONS"},
+        AllowedHeaders: []string{"Content-Type"},
+    }))
     router.Route("/api", func(r chi.Router) {
         r.Get("/machines", machines.GetMachines(s.manager))
         r.Put("/machine", machines.PutMachine(s.manager))
