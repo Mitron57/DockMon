@@ -47,7 +47,7 @@ func (h MachineRepository) Put(ctx context.Context, health *models.Machine) erro
 	return nil
 }
 
-func (h MachineRepository) All(ctx context.Context) (map[string]*models.Machine, error) {
+func (h MachineRepository) All(ctx context.Context) ([]*models.Machine, error) {
 	tx, err := h.db.Begin()
 	if err != nil {
 		return nil, err
@@ -62,14 +62,14 @@ func (h MachineRepository) All(ctx context.Context) (map[string]*models.Machine,
 		return nil, err
 	}
 	defer rows.Close()
-	result := make(map[string]*models.Machine, 5) //let cap be 5, to amortize reallocation frequency
+	result := make([]*models.Machine, 5) //let cap be 5, to amortize reallocation frequency
 	for rows.Next() {
 		machine := models.Machine{}
 		err = rows.Scan(&machine.IP, &machine.PingTime, &machine.Success, &machine.LastSuccess)
 		if err != nil {
 			return nil, err
 		}
-		result[machine.IP] = &machine
+		result = append(result, &machine)
 	}
 	return result, nil
 }
