@@ -10,9 +10,10 @@ type Config struct {
 }
 
 type app struct {
-    Host string   `yaml:"host"`
-    Port string   `yaml:"port"`
-    Db   dbConfig `yaml:"db"`
+    Host   string   `yaml:"host"`
+    Port   string   `yaml:"port"`
+    Period int      `yaml:"period"`
+    Db     dbConfig `yaml:"db"`
 }
 
 type dbConfig struct {

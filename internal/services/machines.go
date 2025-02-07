@@ -11,21 +11,20 @@ import (
     "time"
 )
 
-const future = 10 * time.Second
-
 type MachinesService struct {
-    repo  infrastructure.MachineRepository
-    mx    sync.Mutex
-    cache map[string]*models.Machine
-    last  time.Time
+    repo   infrastructure.MachineRepository
+    mx     sync.Mutex
+    cache  map[string]*models.Machine
+    last   time.Time
+    period time.Duration
 }
 
-func NewMachinesService(repo infrastructure.MachineRepository) services.Manager {
-    return &MachinesService{repo: repo}
+func NewMachinesService(repo infrastructure.MachineRepository, period time.Duration) services.Manager {
+    return &MachinesService{repo: repo, period: period}
 }
 
 func (m *MachinesService) Save(ctx context.Context, machine *models.Machine) error {
-    if time.Now().Before(m.last.Add(future)) {
+    if time.Now().Before(m.last.Add(m.period)) {
         m.mx.Lock()
         m.cache[machine.IP] = machine
         m.mx.Unlock()
@@ -34,7 +33,7 @@ func (m *MachinesService) Save(ctx context.Context, machine *models.Machine) err
 }
 
 func (m *MachinesService) Machines(ctx context.Context) ([]*models.Machine, error) {
-    if time.Now().After(m.last.Add(future)) {
+    if time.Now().After(m.last.Add(m.period)) {
         m.last = time.Now()
         cache, err := m.repo.All(ctx)
         if err != nil {
