@@ -3,7 +3,8 @@
 CREATE TABLE HealthCheck (
     IP INET PRIMARY KEY NOT NULL,
     PingTime INTEGER NOT NULL,
-    LastCheck TIMESTAMP NOT NULL 
+    Success BOOLEAN NOT NULL,
+    LastSuccess TIMESTAMP NOT NULL 
 );
 -- +goose StatementEnd
 
