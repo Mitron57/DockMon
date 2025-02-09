@@ -1,12 +1,14 @@
 package machines
 
 import (
+    "context"
     "dockMon/internal/domain/dto"
     "dockMon/internal/domain/interfaces/services"
     "dockMon/pkg/http/response"
     "go.uber.org/zap"
     "log"
     "net/http"
+    "time"
 )
 
 func GetMachines(m services.Manager) http.HandlerFunc {
@@ -18,7 +20,9 @@ func GetMachines(m services.Manager) http.HandlerFunc {
             return
         }
         defer logger.Sync()
-        machines, err := m.Machines(r.Context())
+        ctx, cancel := context.WithTimeout(r.Context(), time.Second*2)
+        defer cancel()
+        machines, err := m.Machines(ctx)
         if err != nil {
             logger.Error(err.Error(), zap.String("handler", "GetMachines"))
             response.InternalServerError(w, placeholder)

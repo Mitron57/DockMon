@@ -64,15 +64,20 @@ func (s *Server) dbConnect() {
     if password == "" {
         log.Fatalf("%s env variable not set", s.cfg.App.Db.PasswordEnvKey)
     }
-    db, err := sql.Open("postgres", toDbUrl(user, password, s.cfg.App.Db.Host, s.cfg.App.Db.Port, s.cfg.App.Db.Dbname, s.cfg.App.Db.Sslmode))
+    dbUrl := toDbUrl(user, password, s.cfg.App.Db.Host, s.cfg.App.Db.Port, s.cfg.App.Db.Dbname, s.cfg.App.Db.Sslmode)
+    db, err := sql.Open("postgres", dbUrl)
+    if err != nil {
+        log.Fatal(err)
+    }
+    db.SetMaxOpenConns(25)
+    db.SetMaxIdleConns(5)
+    db.SetConnMaxLifetime(5 * time.Minute)
+    db.SetConnMaxIdleTime(2 * time.Minute)
+    err = postgres.PerformMigration(db)
     if err != nil {
         log.Fatal(err)
     }
     s.db = db
-    err = postgres.PerformMigration(s.db)
-    if err != nil {
-        log.Fatal(err)
-    }
 }
 
 func (s *Server) initRouter() {

@@ -1,6 +1,7 @@
 package machines
 
 import (
+    "context"
     "dockMon/internal/domain/interfaces/services"
     "dockMon/internal/domain/models"
     "dockMon/pkg/http/response"
@@ -8,6 +9,7 @@ import (
     "go.uber.org/zap"
     "log"
     "net/http"
+    "time"
 )
 
 const placeholder = "Something went wrong"
@@ -27,7 +29,9 @@ func PutMachine(m services.Manager) http.HandlerFunc {
             response.ErrorResponse(w, http.StatusBadRequest, "Incorrect json format")
             return
         }
-        err = m.Save(r.Context(), machine)
+        ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
+        defer cancel()
+        err = m.Save(ctx, machine)
         if err != nil {
             logger.Error(err.Error(), zap.String("handler", "PutMachine"))
             response.InternalServerError(w, placeholder)

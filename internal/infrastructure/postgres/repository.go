@@ -6,6 +6,7 @@ import (
     "dockMon/internal/domain/interfaces/infrastructure"
     "dockMon/internal/domain/models"
     _ "github.com/lib/pq"
+    "log"
 )
 
 const InsertStmt = `INSERT INTO HealthCheck VALUES ($1, $2, $3, $4) 
@@ -15,11 +16,25 @@ CASE WHEN $3 THEN $4 ELSE HealthCheck.LastSuccess END`
 const SelectStmt = "SELECT IP, PingTime, Success, LastSuccess FROM HealthCheck"
 
 type MachineRepository struct {
-    db *sql.DB
+    insert   *sql.Stmt
+    retrieve *sql.Stmt
+    db       *sql.DB
 }
 
 func NewMachineRepository(db *sql.DB) infrastructure.MachineRepository {
-    return MachineRepository{db: db}
+    insert, err := db.Prepare(InsertStmt)
+    if err != nil {
+        log.Fatal(err)
+    }
+    retrieve, err := db.Prepare(SelectStmt)
+    if err != nil {
+        log.Fatal(err)
+    }
+    return MachineRepository{
+        insert:   insert,
+        retrieve: retrieve,
+        db:       db,
+    }
 }
 
 func (h MachineRepository) Put(ctx context.Context, health *models.Machine) error {
@@ -27,17 +42,16 @@ func (h MachineRepository) Put(ctx context.Context, health *models.Machine) erro
     if err != nil {
         return err
     }
-    stmt, err := tx.PrepareContext(ctx, InsertStmt)
-    if err != nil {
-        return err
-    }
-    defer stmt.Close()
-    _, err = stmt.ExecContext(
+    defer func() {
+        if err != nil {
+            tx.Rollback()
+        }
+    }()
+    _, err = tx.StmtContext(ctx, h.insert).ExecContext(
         ctx,
         health.IP, health.PingTime, health.Success, health.LastSuccess,
     )
     if err != nil {
-        tx.Rollback()
         return err
     }
     err = tx.Commit()
@@ -48,16 +62,7 @@ func (h MachineRepository) Put(ctx context.Context, health *models.Machine) erro
 }
 
 func (h MachineRepository) All(ctx context.Context) ([]*models.Machine, error) {
-    tx, err := h.db.Begin()
-    if err != nil {
-        return nil, err
-    }
-    stmt, err := tx.PrepareContext(ctx, SelectStmt)
-    if err != nil {
-        return nil, err
-    }
-    defer stmt.Close()
-    rows, err := stmt.QueryContext(ctx)
+    rows, err := h.retrieve.QueryContext(ctx)
     if err != nil {
         return nil, err
     }
@@ -70,6 +75,9 @@ func (h MachineRepository) All(ctx context.Context) ([]*models.Machine, error) {
             return nil, err
         }
         result = append(result, &machine)
+    }
+    if err = rows.Err(); err != nil {
+        return nil, err
     }
     return result, nil
 }
