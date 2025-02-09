@@ -83,15 +83,15 @@ func (s *Server) dbConnect() {
 func (s *Server) initRouter() {
     logger := zap.Must(zap.NewProduction())
     router := chi.NewRouter()
+    router.Use(cors.Handler(cors.Options{
+        AllowedOrigins: []string{"*"},
+        AllowedMethods: []string{"GET", "PUT", "OPTIONS"},
+        AllowedHeaders: []string{"Content-Type"},
+    }))
     router.Use(middlewares.InjectLogger(logger))
     router.Use(middleware.RequestID)
     router.Use(middleware.Logger)
     router.Use(middleware.Recoverer)
-    router.Use(cors.Handler(cors.Options{
-        AllowedOrigins: []string{"http://*", "https://*"},
-        AllowedMethods: []string{"GET", "PUT", "OPTIONS"},
-        AllowedHeaders: []string{"Content-Type"},
-    }))
     router.Route("/api", func(r chi.Router) {
         r.Get("/machines", machines.GetMachines(s.manager))
         r.Put("/machine", machines.PutMachine(s.manager))
