@@ -5,19 +5,23 @@ import (
     "dockMon/internal/domain/interfaces/infrastructure"
     "dockMon/internal/domain/interfaces/services"
     "dockMon/internal/domain/models"
-    "time"
+    "errors"
 )
 
+var NilMachine = errors.New("machine is nil")
+
 type MachinesService struct {
-    repo   infrastructure.MachineRepository
-    period time.Duration
+    repo infrastructure.MachineRepository
 }
 
-func NewMachinesService(repo infrastructure.MachineRepository, period time.Duration) services.Manager {
-    return &MachinesService{repo: repo, period: period}
+func NewMachinesService(repo infrastructure.MachineRepository) services.Manager {
+    return &MachinesService{repo: repo}
 }
 
 func (m *MachinesService) Save(ctx context.Context, machine *models.Machine) error {
+    if machine == nil {
+        return NilMachine
+    }
     return m.repo.Put(ctx, machine)
 }
 

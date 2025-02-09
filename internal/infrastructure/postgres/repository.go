@@ -37,7 +37,7 @@ func NewMachineRepository(db *sql.DB) infrastructure.MachineRepository {
     }
 }
 
-func (h MachineRepository) Put(ctx context.Context, health *models.Machine) error {
+func (h MachineRepository) Put(ctx context.Context, machine *models.Machine) error {
     tx, err := h.db.Begin()
     if err != nil {
         return err
@@ -49,7 +49,7 @@ func (h MachineRepository) Put(ctx context.Context, health *models.Machine) erro
     }()
     _, err = tx.StmtContext(ctx, h.insert).ExecContext(
         ctx,
-        health.IP, health.PingTime, health.Success, health.LastSuccess,
+        machine.IP, machine.PingTime, machine.Success, machine.LastSuccess,
     )
     if err != nil {
         return err

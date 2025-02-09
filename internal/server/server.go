@@ -45,7 +45,7 @@ func (s *Server) Init(path string) {
     s.dbConnect()
 
     s.machineRepo = postgres.NewMachineRepository(s.db)
-    s.manager = serviceImpl.NewMachinesService(s.machineRepo, time.Duration(s.cfg.App.Period))
+    s.manager = serviceImpl.NewMachinesService(s.machineRepo)
 
     s.initRouter()
     s.server = &http.Server{
