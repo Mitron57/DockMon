@@ -20,7 +20,7 @@ func GetMachines(m services.Manager) http.HandlerFunc {
             return
         }
         defer logger.Sync()
-        ctx, cancel := context.WithTimeout(r.Context(), time.Second*2)
+        ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
         defer cancel()
         machines, err := m.Machines(ctx)
         if err != nil {
